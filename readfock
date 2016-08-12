@@ -1,0 +1,100 @@
+#!/usr/bin/perl
+$arg=@ARGV;
+if($arg<1){
+	die "Please use it for com.log file\n";
+};
+open(LOG,$ARGV[0]) or die "File $ARGV[0] does not exist\n";
+while($line=<LOG>){
+	if($line=~/Fock matrix \(alpha\)/){
+		$itip=$il;
+		$tip++;
+		print STDERR "Cycle $tip line $il\n";
+	};
+	$il++;
+};
+if($tip<1){
+	die "File dost not contain Fock matrix information\n";
+};
+print STDERR "File has $tip iterations, the last one is at $itip line\n";
+close(LOG); 
+open(LOG,$ARGV[0]);
+for($il=0;$il<=$itip;$il++){
+	$line=<LOG>;
+};
+unless($line=~/Fock matrix \(alpha\)/){
+	die "Something wrong, line:$line";
+}; 
+while($line=<LOG>){
+	$header=0;
+	if($line=~/Fock.+beta/){
+		last;
+	};
+	$line=~s/^\s*//;
+#	print $line;
+	@tmp=split(/\s+/,$line);
+	$tmpn=@tmp;
+	if($tmpn<1){
+		die "Wrong format too short ($tmpn) $line";
+	};
+	unless($tmp[0]=~/^\d+$/){
+		die "Wrong fromat $tmp[0]\n";
+	};
+	if(($tmp[0]=~/^\d+$/ and $tmpn==1) or $tmp[1]=~/^\d+$/){
+		$header=1;
+		if($j==0){
+			$cpa=$si;
+		};	
+		if($i+$si!=$cpa){
+			die "Disagree number of rows\n";
+		};
+		$i=$i+$r;
+		$j=$j+$r;
+		$r=0;
+		foreach $tp (@tmp){
+			unless($tp=~/^\d+$/){
+				die "Wrong format, $tp not a header\n";
+			};
+			if($tp-1!=$j+$r){
+				die "Problem with the format, diagreement with column numbers $j $r $tp\n";
+			}; 
+			$r++;
+		};
+		$si=0;
+	};
+	if($header==0){
+		if($tmp[0]-1!=$i+$si){
+			die "Problem with the format, diagreement with row numbers $i+$si $tmp[0]-1\n";
+		};
+		$s=0;
+		for($zi=1;$zi<$tmpn;$zi++){
+			unless($tmp[$zi]=~/^[-+]?\d+\.\d+D[-+]\d+$/){
+				die "Wrong format, $tmp[$zi] not a number in exponential format\n";
+			};	
+			$tmp[$zi]=~s/D/E/;
+			$mat[$i+$si][$j+$s]=$tmp[$zi];
+			$s++;
+		};
+		unless($r==$s){
+			if($si+1>$r or $si+1!=$s){
+				die "Incompatible format ($i,$j) $r $s {$tmpn}\n";
+			};
+		};
+		$si++;
+	};
+	$#tmp=-1;
+		
+		
+	
+		
+};
+print STDERR "-----------$cpa----------\n";
+for($i=0;$i<$cpa;$i++){
+#	print "$i ";
+	for($j=0;$j<=$i;$j++){
+		print "$mat[$i][$j] ";
+	};
+	for($j=$i+1;$j<$cpa;$j++){
+		printf "$mat[$j][$i] ";
+	};
+	print "\n";
+};	
