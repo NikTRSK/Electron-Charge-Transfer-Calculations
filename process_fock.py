@@ -71,12 +71,8 @@ def createFockFile(src, createFock):
   # Generate fockMatrix file if it's only the whole molecule
   edited = False # For checking whether the file has been edited
   if (createFock == 1):
-
-    if (len(fileList) == 0):
-      fockParams = "Iop(5/33=3) Iop(3/33=1) "
-      guess = "guess=read"
-    else:
-      edited = True # If doesn't need to be edited change the edited flag
+    fockParams = "Iop(5/33=3) Iop(3/33=1) "
+    guess = "guess=read"
 
   for line in srcFile:
     # extract checkpoint file
