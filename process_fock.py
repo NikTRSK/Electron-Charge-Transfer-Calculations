@@ -6,7 +6,6 @@ from datetime import datetime
 import shutil
 from subprocess import Popen, PIPE
 import os
-import csv
 
 global fileList
 fileList = []
@@ -16,9 +15,6 @@ chkFiles = []
 
 global matrixList
 matrixList = []
-
-# global writer
-# writer
 
 def main():
   # Process command line arguments
@@ -33,7 +29,12 @@ def main():
     if not args.input[file].lower().endswith('.com'):
       logging.debug ("Wrong file extensions. Terminatng...")
       sys.exit()
-    createFockFile(str(args.input[file]))
+
+    # Check if the input file is dimer. If it is create fock file
+    if (file == 0):
+      createFockFile(str(args.input[file]), 1)
+    else:
+      createFockFile(str(args.input[file]), 0)
   
   for file in range(len(fileList)):
     callGaussian(str(fileList[file]))
@@ -45,7 +46,13 @@ def main():
 
   logging.info("Process finished running succesfully")
 
-def createFockFile(src):
+# @src = input filename
+# @createFock = a flag used to diferentiate between dimer and monomers
+def createFockFile(src, createFock):
+  if (createFock != 0 and createFock != 1):
+    logging.debug("Wrong parameter for createFock")
+    exit
+
   logging.info("Preparing: %s" % src) # logging info
   # Load files
   # Get destination
@@ -54,20 +61,22 @@ def createFockFile(src):
   try:
     srcFile = open(src, "r+wb") # open file in r mode
     srcFileTmp = open((src+".tmp"), "wb")
-    dstFile = open(dst, "wb") # open file in w mode
+    
+    if (createFock == 1):
+      dstFile = open(dst, "wb") # open file in w mode
   except IOError as e:
     logging.debug("Error opening file: %s" % e)
     exit
 
   # Generate fockMatrix file if it's only the whole molecule
   edited = False # For checking whether the file has been edited
-  print "file list"
-  print fileList
-  if (len(fileList) == 0):
-    fockParams = "Iop(5/33=3) Iop(3/33=1) "
-    guess = "guess=read"
-  else:
-    edited = True # If doesn't need to be edited change the edited flag
+  if (createFock == 1):
+
+    if (len(fileList) == 0):
+      fockParams = "Iop(5/33=3) Iop(3/33=1) "
+      guess = "guess=read"
+    else:
+      edited = True # If doesn't need to be edited change the edited flag
 
   for line in srcFile:
     # extract checkpoint file
@@ -78,15 +87,18 @@ def createFockFile(src):
 
     srcFileTmp.write(line)
 
-    if (edited == False):
-      if (line in ['\n', '\r\n']):
-        line = "#P " + fockParams + guess + '\n\n'
-        edited = True
+    if (createFock == 1):
+      if (edited == False):
+        if (line in ['\n', '\r\n']):
+          line = "#P " + fockParams + guess + '\n\n'
+          edited = True
 
-    dstFile.write(line)
+    if (createFock == 1):
+      dstFile.write(line)
 
   srcFile.close()
-  dstFile.close()
+  if (createFock == 1):
+    dstFile.close()
   # Overwrite original file
   srcFileTmp.close()
   os.remove(src)
@@ -94,7 +106,8 @@ def createFockFile(src):
 
   # append files to fileList for further processing
   fileList.append(src)
-  fileList.append(dst)
+  if (createFock == 1):
+    fileList.append(dst)
 
   logging.info("\t- Completed creating fock Matrix file: %s" % dst)
 
