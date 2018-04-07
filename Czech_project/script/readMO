@@ -1,0 +1,45 @@
+#!/usr/bin/perl
+while($line=<>){
+	$flage=0;
+	if($line=~/Alpha MO coefficients/){
+		$flage=1;
+		last;
+	};
+};
+unless($flage==1){
+	die "No MO info\n";
+};	
+while($line=<>){
+	unless($line=~/^\s*([-+]?\d+\.\d+E[-+]\d+\s+)+([-+]?\d+\.\d+E[-+]\d+\s*)?$/){
+		last;
+	};
+	$line=~s/^\s*//;
+	@tmp=split(/\s+/,$line);
+	foreach $tp (@tmp){
+		$epe[$i]=$tp;
+		$i++;
+	};
+};
+	$cpene=$i;
+$cpe=sqrt($cpene);
+unless($cpe==int($cpe)){
+	die "Wrong number $cpene ($cpe)\n";
+};
+print STDERR "---$cpene--\n";
+$t=0;
+for($i=0;$i<$cpe;$i++){
+	for($j=0;$j<$cpe;$j++){
+		$mat[$j][$i]=$epe[$t];
+		$t++;
+	};
+};
+unless($t==$cpene){
+	die "Error $t $cpene\n";
+};
+for($i=0;$i<$cpe;$i++){
+	for($j=0;$j<$cpe;$j++){
+		print "$mat[$i][$j] ";
+	};
+	print "\n";
+
+};
